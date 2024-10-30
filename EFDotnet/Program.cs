@@ -39,13 +39,24 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddSingleton<IConnectionMultiplexer>(
-    ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("RedisConnection")));
+// Add Redis
+IConnectionMultiplexer? redis = null;
+try
+{
+    redis = ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("RedisConnection"));
+    builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
+}
+catch (RedisConnectionException ex)
+{
+    Console.WriteLine($"Could not connect to Redis at startup: {ex.Message}");
+    // Register as null so RedisCacheService can handle missing connection
+}
+
+builder.Services.AddScoped<RedisCacheService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddScoped<RedisCacheService>();
 
 var app = builder.Build();
 
