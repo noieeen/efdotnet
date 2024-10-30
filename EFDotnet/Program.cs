@@ -2,6 +2,7 @@
 using EFDotnet.Data;
 using EFDotnet.Services;
 using EFDotnet.Helpers;
+using EFDotnet.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -57,6 +58,9 @@ builder.Services.AddScoped<RedisCacheService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add Scoped Auth
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 

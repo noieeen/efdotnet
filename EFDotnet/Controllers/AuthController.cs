@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using EFDotnet.Helpers;
 using EFDotnet.Models;
+using EFDotnet.Services;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,35 +14,25 @@ public class AuthController : ControllerBase
 
     // In-memory store for simplicity
     private static Dictionary<string, string> _refreshTokens = new();
+    private readonly AuthService _authService;
 
-    public AuthController(JwtTokenHelper jwtTokenHelper)
+    public AuthController(JwtTokenHelper jwtTokenHelper, AuthService authService)
     {
         _jwtTokenHelper = jwtTokenHelper;
+        _authService = authService;
     }
 
     // POST: api/auth/login
     [HttpPost("login")]
-    public ActionResult<AuthResponse> Login([FromBody] User user)
+    public async Task<ActionResult<AuthResponse>> LoginAsync([FromBody] string username, string password)
     {
-        if (user.Username == "test" && user.Password == "password")
-        {
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.Username)
-            };
-
-            var accessToken = _jwtTokenHelper.GenerateAccessToken(claims);
-            var refreshToken = _jwtTokenHelper.GenerateRefreshToken();
-
-            // Store refresh token (in-memory for now)
-            _refreshTokens[user.Username] = refreshToken;
-
-            return Ok(new AuthResponse
-            {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken
-            });
-        }
+        var resp = await _authService.LoginAsync(username, password);
+        if (resp != null) return Ok(resp);
+        
+        // Test
+        // if (username == "test" && password == "password")
+        // {
+        // }
 
         return Unauthorized();
     }
