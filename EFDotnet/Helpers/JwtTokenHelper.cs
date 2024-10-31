@@ -42,4 +42,36 @@ public class JwtTokenHelper
             return Convert.ToBase64String(randomNumber);
         }
     }
+
+    // Extract the expiry time from JWT token
+    public DateTime? GetTokenExpiry(string token)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        JwtSecurityToken? jwtToken = null;
+
+        try
+        {
+            jwtToken = tokenHandler.ReadJwtToken(token);
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
+
+        var expClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Exp);
+        if (expClaim == null)
+        {
+            return null; // not found
+        }
+
+        // Convert Unix timestamp to DateTime
+
+        if (long.TryParse(expClaim.Value, out var expSeconds))
+        {
+            var expiryDateTime = DateTimeOffset.FromUnixTimeSeconds(expSeconds).UtcDateTime;
+            return expiryDateTime;
+        }
+
+        return null;
+    }
 }
